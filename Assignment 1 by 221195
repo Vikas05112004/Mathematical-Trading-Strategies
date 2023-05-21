@@ -1,0 +1,61 @@
+import yfinance as yf
+import math
+import statistics as stats
+
+start_date = '2010-01-01'
+end_date = '2023-05-01'
+ticker1 = {'DJI', 'HSI', 'DJT', 'SPX', 'DAX'}
+ticker2 = {'NFLX', 'AMZN', 'PYPL', 'AAPL', 'MSFT'}
+
+
+def getData(ticker, start_date, end_date):
+    for t in ticker :
+        data = yf.download(t, start_date, end_date)
+    
+        closeData = data["Close"]
+        openData = data["Open"]
+        high = data["High"]
+        low = data["Low"]
+        maxPrice = max(high)
+        minPrice = min(low)
+        maxDDDaily = min((low-high)/high)
+        dailtPL = data["Close"]-data["Open"]
+
+        dailyCumRet = dailtPL/openData
+
+        netPandL = 0
+        size = 0
+        for x in dailtPL :
+            netPandL = netPandL + x
+            size = size+1
+
+        dailyVol = stats.stdev(dailyCumRet)
+        dailyRetMean = stats.mean(dailtPL)
+        dailyRetSd = stats.stdev(dailtPL)
+        sharpeRatio = dailyRetMean/dailyRetSd
+        
+        onlyLoss = []
+        for x in dailtPL :
+            if x < 0 :
+                onlyLoss.append(x)
+
+        sortinoR = dailyRetMean/stats.stdev(onlyLoss)
+
+        print(t)
+
+        print("Net CR: {:.2f} % \n".format(((closeData[size-1]-openData[0])/openData[0])*100), 
+        "Avg CR: {:.3f} % \n".format(stats.mean(dailyCumRet)*100), 
+        "Net Return: $ {:.2f} \n".format(netPandL), 
+        "Daily Vol:  {:.2f} % \n".format(dailyVol*100),
+        "Annual Vol {:.2f} % \n".format(dailyVol*100*math.sqrt(252)),
+        "Overall Vol {:.2f} % \n".format(dailyVol*100*math.sqrt(size)),
+        "Max DD {:.2f} % \n".format(((minPrice-maxPrice)/maxPrice)*100),
+        "Sharpe Ratio {:.2f} \n".format((sharpeRatio)),
+        "An. Sharpe Ratio {:.2f} \n".format((sharpeRatio)*math.sqrt(252)),
+        "All Sharpe Ratio {:.2f} \n".format((sharpeRatio)*math.sqrt(size)),
+        "Sortino Ratio {:.2f} \n".format((sortinoR)),
+        "An. Sortino Ratio {:.2f} \n".format((sortinoR)*math.sqrt(252)),
+        "All Sortino Ratio {:.2f} \n".format((sortinoR)*math.sqrt(size)))
+
+getData(ticker1, start_date, end_date)
+getData(ticker2, start_date, end_date)
